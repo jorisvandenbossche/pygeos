@@ -5,6 +5,7 @@
 #include <math.h>
 #include <geos_c.h>
 #include <structmember.h>
+#include <stdio.h>
 #include "numpy/ndarraytypes.h"
 #include "numpy/ufuncobject.h"
 #include "numpy/npy_3kcompat.h"
@@ -90,10 +91,15 @@ static struct PyModuleDef moduledef = {
     NULL
 };
 
+typedef GEOSGeometry* pGEOSGeom; 
+
 typedef struct {
     PyObject_HEAD
-    void *ptr;
+    pGEOSGeom ptr;
 } GeometryObject;
+
+PyArray_Descr* geometry_descr;
+
 
 /* This initializes a pointer to a NULL geometry */
 static GeometryObject *Geom_Empty = NULL;
@@ -199,7 +205,7 @@ static PyObject *GeometryObject_repr(GeometryObject *self)
     } else if (self == Geom_Empty) {
         return PyUnicode_FromString("<pygeos.Empty>");
     } else {
-        return to_wkt(self, "<pygeos.Geometry %s>", 1, 3, 3, 0);
+        return to_wkt(self, "<pygeos.ufuncs.Geometry %s>", 1, 3, 3, 0);
     }
 }
 
@@ -416,6 +422,64 @@ static char get_geom(GeometryObject *obj, GEOSGeometry **out) {
         }
     }
 }
+
+
+// Functions implementing internal features. Not all of these function
+// pointers must be defined for a given type. The required members are
+// nonzero, copyswap, copyswapn, setitem, getitem, and cast.
+static PyArray_ArrFuncs _Geometry_ArrFuncs;
+
+
+static int GEOMETRY_setitem(PyObject* item, pGEOSGeom* data, void* NPY_UNUSED(ap))
+{
+  printf("SetItem!\n");
+  get_geom(*(GeometryObject **)item, data);
+  return 0;
+}
+
+// When a numpy array of dtype=quaternion is indexed, this function is
+// called, returning a new quaternion object with a copy of the
+// data... sometimes...
+static PyObject *
+GEOMETRY_getitem(pGEOSGeom* data, void* NPY_UNUSED(arr))
+{
+  printf("GetItem!\n");
+  PyObject * res;
+  res = GeometryObject_FROMGEOS(&GeometryType, *data);
+  return res;
+//   return (PyObject *) data;
+}
+
+
+static void
+GEOMETRY_copyswap(GeometryObject *dst, GeometryObject *src,
+                  int swap, void *NPY_UNUSED(arr))
+{
+  PyArray_Descr *descr;
+  descr = PyArray_DescrFromType(NPY_OBJECT);
+  descr->f->copyswapn(dst, sizeof(GeometryObject), src, sizeof(GeometryObject), 4, swap, NULL);
+  Py_DECREF(descr);
+}
+
+
+// static void
+// npyquad_copyswap(void* dst, void* src, int swap, void* NPY_UNUSED(arr))
+// {
+//     qdouble *q;
+
+//     if (!src) {
+//         return;
+//     }
+//     q = (qdouble*)dst;
+//     /* FIXME: memmove vs memcpy */
+//     memmove(q, src, sizeof(*q));
+//     if (swap) {
+//         byteswap(q);
+//     }
+// }
+
+
+
 
 /* Define the geom -> bool functions (Y_b) */
 static void *is_empty_data[1] = {GEOSisEmpty_r};
@@ -1185,9 +1249,15 @@ TODO relate functions
     PyDict_SetItemString(d, # NAME, ufunc)
 
 
+typedef struct { char c; pGEOSGeom g; } align_test;
+
 PyMODINIT_FUNC PyInit_ufuncs(void)
 {
     PyObject *m, *d, *ufunc;
+    PyObject* numpy;
+    PyObject* numpy_dict;
+    int geometryNum;
+
     m = PyModule_Create(&moduledef);
     if (!m) {
         return NULL;
@@ -1202,6 +1272,61 @@ PyMODINIT_FUNC PyInit_ufuncs(void)
 
     import_array();
     import_umath();
+
+    numpy = PyImport_ImportModule("numpy");
+    if (!numpy) {
+        return NULL;
+    }
+    numpy_dict = PyModule_GetDict(numpy);
+    if (!numpy_dict) {
+        return NULL;
+    }
+
+    // Register the geometry array base type.  Couldn't do this until
+    // after we imported numpy (above)
+    GeometryType.tp_base = &PyGenericArrType_Type;
+    if (PyType_Ready(&GeometryType) < 0) {
+        PyErr_Print();
+        PyErr_SetString(PyExc_SystemError, "Could not initialize GeometryType.");
+        return NULL;
+    }
+
+    // The array functions, to be used below.  This InitArrFuncs
+    // function is a convenient way to set all the fields to zero
+    // initially, so we don't get undefined behavior.
+    PyArray_InitArrFuncs(&_Geometry_ArrFuncs);
+    // _Geometry_ArrFuncs.nonzero = (PyArray_NonzeroFunc*)QUATERNION_nonzero;
+    _Geometry_ArrFuncs.copyswap = (PyArray_CopySwapFunc*)GEOMETRY_copyswap;
+    // _Geometry_ArrFuncs.copyswapn = (PyArray_CopySwapNFunc*)QUATERNION_copyswapn;
+    _Geometry_ArrFuncs.setitem = (PyArray_SetItemFunc*)GEOMETRY_setitem;
+    _Geometry_ArrFuncs.getitem = (PyArray_GetItemFunc*)GEOMETRY_getitem;
+    // _Geometry_ArrFuncs.compare = (PyArray_CompareFunc*)QUATERNION_compare;
+    // _Geometry_ArrFuncs.argmax = (PyArray_ArgFunc*)QUATERNION_argmax;
+    // _Geometry_ArrFuncs.fillwithscalar = (PyArray_FillWithScalarFunc*)QUATERNION_fillwithscalar;
+
+    // The quaternion array descr
+    geometry_descr = PyObject_New(PyArray_Descr, &PyArrayDescr_Type);
+    geometry_descr->typeobj = &GeometryType;
+    geometry_descr->kind = 'V';
+    geometry_descr->type = 'g';
+    geometry_descr->byteorder = '=';
+    geometry_descr->flags = NPY_NEEDS_PYAPI | NPY_USE_GETITEM | NPY_USE_SETITEM;
+    geometry_descr->type_num = 0; // assigned at registration
+    geometry_descr->elsize = sizeof(pGEOSGeom);
+    geometry_descr->alignment = offsetof(align_test, g);;
+    geometry_descr->subarray = NULL;
+    geometry_descr->fields = NULL;
+    geometry_descr->names = NULL;
+    geometry_descr->f = &_Geometry_ArrFuncs;
+    geometry_descr->metadata = NULL;
+    geometry_descr->c_metadata = NULL;
+
+    Py_INCREF(&GeometryType);
+    geometryNum = PyArray_RegisterDataType(geometry_descr);
+
+    if (geometryNum < 0) {
+        return NULL;
+    }
 
     void *context_handle = GEOS_init_r();
     PyObject* GEOSException = PyErr_NewException("pygeos.GEOSException", NULL, NULL);

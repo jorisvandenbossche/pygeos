@@ -41,7 +41,7 @@ pyquad_str(PyObject *self)
     if (st < 0) {
         fprintf(stderr, "BAD\n");
     }
-    return PyString_FromString(str);
+    return PyUnicode_FromString(str);
 }
 
 PyObject *
@@ -55,7 +55,7 @@ pyquad_repr(PyObject *self)
     if (st < 0) {
         fprintf(stderr, "BAD\n");
     }
-    return PyString_FromString(str);
+    return PyUnicode_FromString(str);
 }
 
 PyTypeObject PyQuad_Type = {
@@ -79,7 +79,7 @@ PyTypeObject PyQuad_Type = {
     0,                                        /* tp_getattro */
     0,                                        /* tp_setattro */
     0,                                        /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_CHECKTYPES, /* tp_flags */
+    Py_TPFLAGS_DEFAULT, /*| Py_TPFLAGS_BASETYPE | Py_TPFLAGS_CHECKTYPES, /* tp_flags */
     "Quad precision floating numbers",        /* tp_doc */
     0,                                        /* tp_traverse */
     0,                                        /* tp_clear */

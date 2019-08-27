@@ -8,7 +8,7 @@
  */
 
 #line 1
-/* #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION */
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 
 #include <Python.h>
 #include <stddef.h>
@@ -24,29 +24,33 @@ PyArray_ArrFuncs NpyQuad_ArrFuncs;
 
 typedef struct { char c; qdouble q; } align_test;
 
-PyArray_Descr npyquad_descr = {
-    PyObject_HEAD_INIT(0)
-    &PyQuad_Type,       /* typeobj */
-    'f',                /* kind */
-    'q',                /* type */
-    '=',                /* byteorder */
-    /*
-     * For now, we need NPY_NEEDS_PYAPI in order to make numpy detect our
-     * exceptions.  This isn't technically necessary,
-     * since we're careful about thread safety, and hopefully future
-     * versions of numpy will recognize that.
-     */
-    NPY_NEEDS_PYAPI | NPY_USE_GETITEM | NPY_USE_SETITEM, /* hasobject */
-    0,                      /* type_num */
-    sizeof(qdouble),       /* elsize */
-    offsetof(align_test, q), /* alignment */
-    0,                      /* subarray */
-    0,                      /* fields */
-    0,                      /* names */
-    &NpyQuad_ArrFuncs,  /* f */
-    0,                      /* metadata */
-    0,
-};
+PyArray_Descr* npyquad_descr;
+
+
+
+// PyArray_Descr npyquad_descr = {
+//     PyObject_HEAD_INIT(0)
+//     &PyQuad_Type,       /* typeobj */
+//     'f',                /* kind */
+//     'q',                /* type */
+//     '=',                /* byteorder */
+//     /*
+//      * For now, we need NPY_NEEDS_PYAPI in order to make numpy detect our
+//      * exceptions.  This isn't technically necessary,
+//      * since we're careful about thread safety, and hopefully future
+//      * versions of numpy will recognize that.
+//      */
+//     NPY_NEEDS_PYAPI | NPY_USE_GETITEM | NPY_USE_SETITEM, /* hasobject */
+//     0,                      /* type_num */
+//     sizeof(qdouble),       /* elsize */
+//     offsetof(align_test, q), /* alignment */
+//     0,                      /* subarray */
+//     0,                      /* fields */
+//     0,                      /* names */
+//     &NpyQuad_ArrFuncs,  /* f */
+//     0,                      /* metadata */
+//     0,
+// };
 
 static PyObject *
 npyquad_getitem(char *data, PyArrayObject *NPY_UNUSED(arr))
@@ -106,7 +110,7 @@ npyquad_copyswap(void* dst, void* src, int swap, void* NPY_UNUSED(arr))
     }
 }
 
-#line 104
+#line 108
 static void
 npycast_int8_to_quad(void* from, void* to, npy_intp n, void* NPY_UNUSED(fromarr), void* NPY_UNUSED(toarr))
 {
@@ -134,7 +138,7 @@ static int register_int8_to_qdouble_cast(int npy_registered_quadnum)
     return 0;
 }
 
-#line 104
+#line 108
 static void
 npycast_int16_to_quad(void* from, void* to, npy_intp n, void* NPY_UNUSED(fromarr), void* NPY_UNUSED(toarr))
 {
@@ -162,7 +166,7 @@ static int register_int16_to_qdouble_cast(int npy_registered_quadnum)
     return 0;
 }
 
-#line 104
+#line 108
 static void
 npycast_int32_to_quad(void* from, void* to, npy_intp n, void* NPY_UNUSED(fromarr), void* NPY_UNUSED(toarr))
 {
@@ -190,7 +194,7 @@ static int register_int32_to_qdouble_cast(int npy_registered_quadnum)
     return 0;
 }
 
-#line 104
+#line 108
 static void
 npycast_int64_to_quad(void* from, void* to, npy_intp n, void* NPY_UNUSED(fromarr), void* NPY_UNUSED(toarr))
 {
@@ -218,7 +222,7 @@ static int register_int64_to_qdouble_cast(int npy_registered_quadnum)
     return 0;
 }
 
-#line 104
+#line 108
 static void
 npycast_float_to_quad(void* from, void* to, npy_intp n, void* NPY_UNUSED(fromarr), void* NPY_UNUSED(toarr))
 {
@@ -246,7 +250,7 @@ static int register_float_to_qdouble_cast(int npy_registered_quadnum)
     return 0;
 }
 
-#line 104
+#line 108
 static void
 npycast_double_to_quad(void* from, void* to, npy_intp n, void* NPY_UNUSED(fromarr), void* NPY_UNUSED(toarr))
 {
@@ -274,7 +278,7 @@ static int register_double_to_qdouble_cast(int npy_registered_quadnum)
     return 0;
 }
 
-#line 104
+#line 108
 static void
 npycast_ldouble_to_quad(void* from, void* to, npy_intp n, void* NPY_UNUSED(fromarr), void* NPY_UNUSED(toarr))
 {
@@ -303,7 +307,7 @@ static int register_ldouble_to_qdouble_cast(int npy_registered_quadnum)
 }
 
 
-#line 136
+#line 140
 static void
 npycast_quad_to_int8(void* from, void* to, npy_intp n, void* NPY_UNUSED(fromarr), void* NPY_UNUSED(toarr))
 {
@@ -327,7 +331,7 @@ static int register_qdouble_to_int8_cast(int npy_registered_quadnum)
     return 0;
 }
 
-#line 136
+#line 140
 static void
 npycast_quad_to_int16(void* from, void* to, npy_intp n, void* NPY_UNUSED(fromarr), void* NPY_UNUSED(toarr))
 {
@@ -351,7 +355,7 @@ static int register_qdouble_to_int16_cast(int npy_registered_quadnum)
     return 0;
 }
 
-#line 136
+#line 140
 static void
 npycast_quad_to_int32(void* from, void* to, npy_intp n, void* NPY_UNUSED(fromarr), void* NPY_UNUSED(toarr))
 {
@@ -375,7 +379,7 @@ static int register_qdouble_to_int32_cast(int npy_registered_quadnum)
     return 0;
 }
 
-#line 136
+#line 140
 static void
 npycast_quad_to_int64(void* from, void* to, npy_intp n, void* NPY_UNUSED(fromarr), void* NPY_UNUSED(toarr))
 {
@@ -399,7 +403,7 @@ static int register_qdouble_to_int64_cast(int npy_registered_quadnum)
     return 0;
 }
 
-#line 136
+#line 140
 static void
 npycast_quad_to_float(void* from, void* to, npy_intp n, void* NPY_UNUSED(fromarr), void* NPY_UNUSED(toarr))
 {
@@ -423,7 +427,7 @@ static int register_qdouble_to_float_cast(int npy_registered_quadnum)
     return 0;
 }
 
-#line 136
+#line 140
 static void
 npycast_quad_to_double(void* from, void* to, npy_intp n, void* NPY_UNUSED(fromarr), void* NPY_UNUSED(toarr))
 {
@@ -447,7 +451,7 @@ static int register_qdouble_to_double_cast(int npy_registered_quadnum)
     return 0;
 }
 
-#line 136
+#line 140
 static void
 npycast_quad_to_ldouble(void* from, void* to, npy_intp n, void* NPY_UNUSED(fromarr), void* NPY_UNUSED(toarr))
 {
@@ -474,7 +478,7 @@ static int register_qdouble_to_ldouble_cast(int npy_registered_quadnum)
 
 static int register_cast_functions(int npy_registered_quadnum)
 {
-#line 165
+#line 169
     if(register_int8_to_qdouble_cast(npy_registered_quadnum) < 0) {
         return -1;
     }
@@ -482,7 +486,7 @@ static int register_cast_functions(int npy_registered_quadnum)
         return -1;
     }
 
-#line 165
+#line 169
     if(register_int16_to_qdouble_cast(npy_registered_quadnum) < 0) {
         return -1;
     }
@@ -490,7 +494,7 @@ static int register_cast_functions(int npy_registered_quadnum)
         return -1;
     }
 
-#line 165
+#line 169
     if(register_int32_to_qdouble_cast(npy_registered_quadnum) < 0) {
         return -1;
     }
@@ -498,7 +502,7 @@ static int register_cast_functions(int npy_registered_quadnum)
         return -1;
     }
 
-#line 165
+#line 169
     if(register_int64_to_qdouble_cast(npy_registered_quadnum) < 0) {
         return -1;
     }
@@ -506,7 +510,7 @@ static int register_cast_functions(int npy_registered_quadnum)
         return -1;
     }
 
-#line 165
+#line 169
     if(register_float_to_qdouble_cast(npy_registered_quadnum) < 0) {
         return -1;
     }
@@ -514,7 +518,7 @@ static int register_cast_functions(int npy_registered_quadnum)
         return -1;
     }
 
-#line 165
+#line 169
     if(register_double_to_qdouble_cast(npy_registered_quadnum) < 0) {
         return -1;
     }
@@ -522,7 +526,7 @@ static int register_cast_functions(int npy_registered_quadnum)
         return -1;
     }
 
-#line 165
+#line 169
     if(register_ldouble_to_qdouble_cast(npy_registered_quadnum) < 0) {
         return -1;
     }
@@ -543,7 +547,26 @@ init_quad_descriptor(PyObject* np_module)
     NpyQuad_ArrFuncs.setitem = (PyArray_SetItemFunc*)npyquad_setitem;
     NpyQuad_ArrFuncs.copyswap = (PyArray_CopySwapFunc*)npyquad_copyswap;
 
-    npyquad_descr.ob_type = &PyArrayDescr_Type;
+    //npyquad_descr.ob_type = &PyArrayDescr_Type;
+
+    npyquad_descr = PyObject_New(PyArray_Descr, &PyArrayDescr_Type);
+    npyquad_descr->typeobj = &PyQuad_Type;
+    npyquad_descr->kind = 'f';
+    npyquad_descr->type = 'q';
+    npyquad_descr->byteorder = '=';
+    npyquad_descr->flags = NPY_NEEDS_PYAPI | NPY_USE_GETITEM | NPY_USE_SETITEM;
+    npyquad_descr->type_num = 0; // assigned at registration
+    npyquad_descr->elsize = sizeof(qdouble);
+    npyquad_descr->alignment = offsetof(align_test, q);
+    npyquad_descr->subarray = NULL;
+    npyquad_descr->fields = NULL;
+    npyquad_descr->names = NULL;
+    npyquad_descr->f = &NpyQuad_ArrFuncs;
+    npyquad_descr->metadata = NULL;
+    npyquad_descr->c_metadata = NULL;
+
+
+
     npy_registered_quadnum = PyArray_RegisterDataType(&npyquad_descr);
     if (npy_registered_quadnum < 0) {
         return;
@@ -569,7 +592,16 @@ static PyMethodDef ModuleMethods[] = {
 };
 
 
-PyMODINIT_FUNC init_quad(void)
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "_quad",
+    NULL,
+    -1,
+    ModuleMethods
+};
+
+
+PyMODINIT_FUNC PyInit__quad(void)
 {
     PyObject *m;
     PyObject *np_module;
@@ -584,14 +616,18 @@ PyMODINIT_FUNC init_quad(void)
         return;
     }
 
-    s = PyString_FromString("numpy");
+    s = PyUnicode_FromString("numpy");
     if (!s) {
         return;
     }
     np_module = PyImport_Import(s);
     Py_DECREF(s);
 
-    m = Py_InitModule("_quad", ModuleMethods);
+    m = PyModule_Create(&moduledef);
+    if (!m) {
+        return NULL;
+    }
+    //m = Py_InitModule("_quad", ModuleMethods);
     if (m == NULL) {
         return;
     }

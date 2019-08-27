@@ -106,7 +106,10 @@ class build_ext(_build_ext):
         self.include_dirs.append(numpy.get_include())
 
 
-module_ufuncs = Extension("pygeos.ufuncs", sources=["src/ufuncs.c"], **get_geos_paths())
+module_ufuncs = [
+    Extension("pygeos.ufuncs", sources=["src/ufuncs.c"], **get_geos_paths()),
+    Extension("pygeos.dtype", sources=["src/dtype.c", 'src/quaternion.c'], **get_geos_paths())
+]
 
 try:
     descr = open(os.path.join(os.path.dirname(__file__), "README.rst")).read()
@@ -128,7 +131,7 @@ setup(
     extras_require={"test": ["pytest"], "docs": ["sphinx", "numpydoc"]},
     python_requires=">=3",
     include_package_data=True,
-    ext_modules=[module_ufuncs],
+    ext_modules=module_ufuncs,
     classifiers=[
         "Programming Language :: Python :: 3",
         "Development Status :: 1 - Planning",

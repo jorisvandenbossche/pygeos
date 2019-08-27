@@ -1,4 +1,4 @@
-/* #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION */
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 
 #include <Python.h>
 #include <stddef.h>
@@ -14,29 +14,33 @@ PyArray_ArrFuncs NpyQuad_ArrFuncs;
 
 typedef struct { char c; qdouble q; } align_test;
 
-PyArray_Descr npyquad_descr = {
-    PyObject_HEAD_INIT(0)
-    &PyQuad_Type,       /* typeobj */
-    'f',                /* kind */
-    'q',                /* type */
-    '=',                /* byteorder */
-    /*
-     * For now, we need NPY_NEEDS_PYAPI in order to make numpy detect our
-     * exceptions.  This isn't technically necessary,
-     * since we're careful about thread safety, and hopefully future
-     * versions of numpy will recognize that.
-     */
-    NPY_NEEDS_PYAPI | NPY_USE_GETITEM | NPY_USE_SETITEM, /* hasobject */
-    0,                      /* type_num */
-    sizeof(qdouble),       /* elsize */
-    offsetof(align_test, q), /* alignment */
-    0,                      /* subarray */
-    0,                      /* fields */
-    0,                      /* names */
-    &NpyQuad_ArrFuncs,  /* f */
-    0,                      /* metadata */
-    0,
-};
+PyArray_Descr* npyquad_descr;
+
+
+
+// PyArray_Descr npyquad_descr = {
+//     PyObject_HEAD_INIT(0)
+//     &PyQuad_Type,       /* typeobj */
+//     'f',                /* kind */
+//     'q',                /* type */
+//     '=',                /* byteorder */
+//     /*
+//      * For now, we need NPY_NEEDS_PYAPI in order to make numpy detect our
+//      * exceptions.  This isn't technically necessary,
+//      * since we're careful about thread safety, and hopefully future
+//      * versions of numpy will recognize that.
+//      */
+//     NPY_NEEDS_PYAPI | NPY_USE_GETITEM | NPY_USE_SETITEM, /* hasobject */
+//     0,                      /* type_num */
+//     sizeof(qdouble),       /* elsize */
+//     offsetof(align_test, q), /* alignment */
+//     0,                      /* subarray */
+//     0,                      /* fields */
+//     0,                      /* names */
+//     &NpyQuad_ArrFuncs,  /* f */
+//     0,                      /* metadata */
+//     0,
+// };
 
 static PyObject *
 npyquad_getitem(char *data, PyArrayObject *NPY_UNUSED(arr))
@@ -182,7 +186,26 @@ init_quad_descriptor(PyObject* np_module)
     NpyQuad_ArrFuncs.setitem = (PyArray_SetItemFunc*)npyquad_setitem;
     NpyQuad_ArrFuncs.copyswap = (PyArray_CopySwapFunc*)npyquad_copyswap;
 
-    npyquad_descr.ob_type = &PyArrayDescr_Type;
+    //npyquad_descr.ob_type = &PyArrayDescr_Type;
+
+    npyquad_descr = PyObject_New(PyArray_Descr, &PyArrayDescr_Type);
+    npyquad_descr->typeobj = &PyQuad_Type;
+    npyquad_descr->kind = 'f';
+    npyquad_descr->type = 'q';
+    npyquad_descr->byteorder = '=';
+    npyquad_descr->flags = NPY_NEEDS_PYAPI | NPY_USE_GETITEM | NPY_USE_SETITEM;
+    npyquad_descr->type_num = 0; // assigned at registration
+    npyquad_descr->elsize = sizeof(qdouble);
+    npyquad_descr->alignment = offsetof(align_test, q);
+    npyquad_descr->subarray = NULL;
+    npyquad_descr->fields = NULL;
+    npyquad_descr->names = NULL;
+    npyquad_descr->f = &NpyQuad_ArrFuncs;
+    npyquad_descr->metadata = NULL;
+    npyquad_descr->c_metadata = NULL;
+
+
+
     npy_registered_quadnum = PyArray_RegisterDataType(&npyquad_descr);
     if (npy_registered_quadnum < 0) {
         return;
@@ -208,7 +231,16 @@ static PyMethodDef ModuleMethods[] = {
 };
 
 
-PyMODINIT_FUNC init_quad(void)
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "_quad",
+    NULL,
+    -1,
+    ModuleMethods
+};
+
+
+PyMODINIT_FUNC PyInit__quad(void)
 {
     PyObject *m;
     PyObject *np_module;
@@ -223,14 +255,18 @@ PyMODINIT_FUNC init_quad(void)
         return;
     }
 
-    s = PyString_FromString("numpy");
+    s = PyUnicode_FromString("numpy");
     if (!s) {
         return;
     }
     np_module = PyImport_Import(s);
     Py_DECREF(s);
 
-    m = Py_InitModule("_quad", ModuleMethods);
+    m = PyModule_Create(&moduledef);
+    if (!m) {
+        return NULL;
+    }
+    //m = Py_InitModule("_quad", ModuleMethods);
     if (m == NULL) {
         return;
     }
