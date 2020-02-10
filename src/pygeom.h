@@ -17,6 +17,7 @@ extern PyTypeObject GeometryType;
 extern PyObject *GeometryObject_FromGEOS(PyTypeObject *type, GEOSGeometry *ptr);
 /* Get a GEOSGeometry from a GeometryObject */
 extern char get_geom(GeometryObject *obj, GEOSGeometry **out);
+extern GEOSPreparedGeometry* get_geom_prepared(GeometryObject *obj);
 
 extern int init_geom_type(PyObject *m);
 

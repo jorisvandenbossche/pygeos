@@ -125,7 +125,7 @@ static PyUFuncGenericFunction O_b_funcs[1] = {&O_b_func};
 /* Define the geom, geom -> bool functions (YY_b) */
 static void *disjoint_data[1] = {GEOSDisjoint_r};
 static void *touches_data[1] = {GEOSTouches_r};
-static void *intersects_data[1] = {GEOSIntersects_r};
+static void *intersects_data[1] = {GEOSPreparedIntersects_r};
 static void *crosses_data[1] = {GEOSCrosses_r};
 static void *within_data[1] = {GEOSWithin_r};
 static void *contains_data[1] = {GEOSContains_r};
@@ -140,23 +140,26 @@ static void YY_b_func(char **args, npy_intp *dimensions,
 {
     FuncGEOS_YY_b *func = (FuncGEOS_YY_b *)data;
     void *context_handle = geos_context[0];
-    GEOSGeometry *in1, *in2;
+    GEOSPreparedGeometry *in1_prepared;
+    GEOSGeometry *in2;
     char ret;
 
     BINARY_LOOP {
         /* get the geometries: return on error */
-        if (!get_geom(*(GeometryObject **)ip1, &in1)) { return; }
+        in1_prepared = get_geom_prepared(*(GeometryObject **)ip1);
+        // if (!get_geom_prepared(*(GeometryObject **)ip1, &in1_prepared)) { return; }
         if (!get_geom(*(GeometryObject **)ip2, &in2)) { return; }
-        if ((in1 == NULL) | (in2 == NULL)) {
+        if ((in1_prepared == NULL) | (in2 == NULL)) {
             /* in case of a missing value: return 0 (False) */
             ret = 0;
         } else {
             /* call the GEOS function */
-            ret = func(context_handle, in1, in2);
+            ret = func(context_handle, in1_prepared, in2);
             /* return for illegal values (trust HandleGEOSError for SetErr) */
             if (ret == 2) { return; }
         }
         *(npy_bool *)op1 = ret;
+        GEOSPreparedGeom_destroy_r(context_handle, in1_prepared);
     }
 }
 static PyUFuncGenericFunction YY_b_funcs[1] = {&YY_b_func};

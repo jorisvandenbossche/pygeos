@@ -164,6 +164,35 @@ char get_geom(GeometryObject *obj, GEOSGeometry **out) {
     }
 }
 
+
+/* Get a GEOSPreparedGeometry pointer from a GeometryObject, or NULL if the input is
+Py_None. Returns 0 on error, 1 on success. */
+GEOSPreparedGeometry* get_geom_prepared(GeometryObject *obj) {
+    void *context_handle = geos_context[0];
+    GEOSGeometry *geom;
+    GEOSPreparedGeometry *geom_prepared;
+
+    if (!PyObject_IsInstance((PyObject *) obj, (PyObject *) &GeometryType)) {
+        if ((PyObject *) obj == Py_None) {
+            return NULL;
+        } else {
+            PyErr_Format(PyExc_TypeError, "One of the arguments is of incorrect type. Please provide only Geometry objects.");
+            return NULL;
+        }
+    } else {
+        geom = obj->ptr;
+        geom_prepared = GEOSPrepare_r(context_handle, geom);
+        return geom_prepared;
+        // if (geom_prepared == NULL) {
+        //     return 0;
+        // }
+        // *out = geom_prepared;
+        // return 1;
+    }
+}
+
+
+
 int
 init_geom_type(PyObject *m)
 {
