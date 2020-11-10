@@ -1,0 +1,77 @@
+name: Linux
+
+on: [push, pull_request]
+
+jobs:
+  TestLinux:
+    name: Python ${{ matrix.python }} (GEOS ${{ matrix.geos }}, numpy ${{ matrix.numpy || 'latest' }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # 2015
+          - python: 3.5
+            geos: 3.5.2
+            numpy: 1.10.4
+          # 2017
+          - python: 3.6
+            geos: 3.6.4
+            numpy: 1.13.3
+          # 2018
+          - python: 3.7
+            geos: 3.7.3
+            numpy: 1.15.4
+          # 2019
+          - python: 3.8
+            geos: 3.8.1
+            numpy: 1.17.5
+          # 2020
+          - python: 3.9
+            geos: 3.8.1
+            numpy: 1.19.4
+          # dev
+          - python: 3.9
+            geos: master
+
+    env:
+      GEOS_INSTALL: $HOME/geosinstall/geos-${{ matrix.geos }}
+      GEOS_VERSION: ${{ matrix.geos }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Cache GEOS and pip packages
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/pip
+            $HOME/geosinstall
+
+      - name: Install GEOS
+        shell: bash
+        run: |
+          ./ci/install_geos.sh
+          cd $GITHUB_WORKSPACE
+
+      - name: Install python dependencies
+        shell: bash
+        run: |
+          pip install --disable-pip-version-check --upgrade pip
+          pip install --upgrade wheel
+          pip install --upgrade --pre Cython numpy==${{ matrix.numpy || '' }} pytest;
+  
+      - name: Build PyGEOS
+        shell: bash
+        env:
+          LD_LIBRARY_PATH: $GEOS_INSTALL/lib
+          PATH: $GEOS_INSTALL/bin:$PATH
+        run: |
+          python setup.py build_ext --inplace
+          pip install --no-deps -e .
+
+      - name: Run tests
+        shell: bash
+        continue-on-error: ${{ matrix.geos == 'master' }}
+        run: |
+          pytest --doctest-modules
