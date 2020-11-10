@@ -82,4 +82,5 @@ jobs:
         shell: bash
         continue-on-error: ${{ matrix.geos == 'master' }}
         run: |
+          export LD_LIBRARY_PATH=$GEOS_INSTALL/lib
           pytest --doctest-modules
