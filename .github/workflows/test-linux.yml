@@ -68,7 +68,7 @@ jobs:
           if [ "$GEOS_VERSION" = "master" ]; then
             pip install --upgrade --pre Cython numpy pytest;
           else
-            pip install --upgrade Cython "numpy==$NUMPY_VERSION" pytest;
+            pip install --upgrade Cython numpy==${{ matrix.numpy }} pytest;
           fi
 
       - name: Set environment variables
@@ -93,5 +93,4 @@ jobs:
         shell: bash
         continue-on-error: ${{ matrix.geos == 'master' }}
         run: |
-          export LD_LIBRARY_PATH=$GEOS_INSTALL/lib
           pytest --doctest-modules
