@@ -49,10 +49,10 @@ jobs:
       - name: Cache GEOS and pip packages
         uses: actions/cache@v2
         with:
-          key: ${{ runner.os }}
+          key: ${{ runner.os }}-geos-${{ matrix.geos }}
           path: |
             ~/.cache/pip
-            ~/geosinstall
+            ${{ github.workspace }}/geosinstall
 
       - name: Install GEOS
         shell: bash
