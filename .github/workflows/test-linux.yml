@@ -65,8 +65,12 @@ jobs:
         run: |
           pip install --disable-pip-version-check --upgrade pip
           pip install --upgrade wheel
-          pip install --upgrade --pre Cython numpy==${{ matrix.numpy || '' }} pytest;
-  
+          if [ "$GEOS_VERSION" = "master" ]; then
+            pip install --upgrade --pre Cython numpy pytest;
+          else
+            pip install --upgrade Cython "numpy==$NUMPY_VERSION" pytest;
+          fi
+
       - name: Build PyGEOS
         shell: bash
         # env:
