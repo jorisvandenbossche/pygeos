@@ -44,6 +44,7 @@ jobs:
       - name: Cache GEOS and pip packages
         uses: actions/cache@v2
         with:
+          key: ${{ runner.os }}
           path: |
             ~/.cache/pip
             $HOME/geosinstall
