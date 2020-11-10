@@ -35,7 +35,7 @@ jobs:
             geos: master
 
     env:
-      GEOS_INSTALL: $HOME/geosinstall/geos-${{ matrix.geos }}
+      GEOS_INSTALL: ${{ env.HOME }}/geosinstall/geos-${{ matrix.geos }}
       GEOS_VERSION: ${{ matrix.geos }}
 
     steps:
@@ -70,8 +70,8 @@ jobs:
       - name: Build PyGEOS
         shell: bash
         env:
-          LD_LIBRARY_PATH: $GEOS_INSTALL/lib
-          PATH: $GEOS_INSTALL/bin:$PATH
+          LD_LIBRARY_PATH: ${{ env.GEOS_INSTALL }}/lib
+          PATH: ${{ env.GEOS_INSTALL }}/bin:${{ env.PATH }}
         run: |
           python setup.py build_ext --inplace
           pip install --no-deps -e .
