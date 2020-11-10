@@ -69,10 +69,12 @@ jobs:
   
       - name: Build PyGEOS
         shell: bash
-        env:
-          LD_LIBRARY_PATH: ${{ env.GEOS_INSTALL }}/lib
-          PATH: ${{ env.GEOS_INSTALL }}/bin:${{ env.PATH }}
+        # env:
+        #   LD_LIBRARY_PATH: ${{ env.GEOS_INSTALL }}/lib
+        #   PATH: ${{ env.GEOS_INSTALL }}/bin:${{ env.PATH }}
         run: |
+          export LD_LIBRARY_PATH=$GEOS_INSTALL/lib
+          export PATH=$GEOS_INSTALL/bin:$PATH
           python setup.py build_ext --inplace
           pip install --no-deps -e .
 
